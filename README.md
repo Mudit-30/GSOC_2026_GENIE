@@ -12,12 +12,30 @@ This repository solves all three ML4SCI GENIE GSoC 2026 evaluation tasks, buildi
 
 ---
 
-## Setup
-
+### Setup & Dependencies
 ```bash
+python -m venv venv
+venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
+### 1. Convolutional Autoencoder (Task 1)
+Trains a symmetrical CNN to reconstruct sparse detector images.
+```bash
+python src/task1_cae.py --epochs 20 --batch-size 64 --learning-rate 0.001
+```
+
+### 2. Graph Attention Network (Task 2)
+Projects images onto a $k$-NN topological manifold and classifies them using multi-head attention.
+```bash
+python src/task2_gnn.py --epochs 10 --knn-k 8 --batch-size 64
+```
+
+### 3. Graph Contrastive Learning (Task 3)
+Applies a SimCLR-inspired NT-Xent contrastive framework for unsupervised anomaly detection.
+```bash
+python src/task3_contrastive.py --pretrain-epochs 10 --finetune-epochs 10 --tau 0.5
+```
 > **PyTorch Geometric:** install `torch-scatter` and `torch-sparse` matching your CUDA version from https://data.pyg.org/whl/
 
 **Alternatively, run everything on free GPU via the Colab notebook:**
