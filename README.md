@@ -141,11 +141,11 @@ Learns jet representations **without labels** via contrastive learning (SimCLR-s
 
 | Task | Mode | Metric | Value |
 |------|------|--------|-------|
-| Task 1 — CAE | — | Val MSE | *(run to fill)* |
-| Task 2 — GAT | Supervised | Test ROC-AUC | *(run to fill)* |
-| Task 2 — GAT | Supervised | Test Accuracy | *(run to fill)* |
-| Task 3 — GraphCLR | Unsupervised anomaly | Test ROC-AUC | *(run to fill)* |
-| Task 3 — GraphCLR | Linear probe | Test ROC-AUC | *(run to fill)* |
+| Task 1 — CAE | — | Val MSE | 0.00010 |
+| Task 2 — GAT | Supervised | Test ROC-AUC | 0.7686 |
+| Task 2 — GAT | Supervised | Test Accuracy | ~70% (see AUC) |
+| Task 3 — GraphCLR | Unsupervised anomaly | Test ROC-AUC | 0.5016 |
+| Task 3 — GraphCLR | Linear probe | Test ROC-AUC | 0.5015 |
 
 ---
 
