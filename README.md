@@ -1,4 +1,4 @@
-# GENIE GSoC 2026 — Deep Graph Anomaly Detection with Contrastive Learning
+# GENIE GSoC 2026 — GSOC_2026_GENIE
 
 **ML4SCI Evaluation Submission** | Author: Mudit
 
@@ -11,7 +11,7 @@ This repository develops a deep learning pipeline for **quark/gluon jet classifi
 **Task Status:** 
 - [x] **Common Task 1:** Convolutional Autoencoder (Baseline)
 - [x] **Common Task 2:** GNN Jet Classifier (Implemented)
-- [ ] **Specific Task 1:** Contrastive Anomaly Detection (Upcoming)
+- [x] **Specific Task 1:** Contrastive Anomaly Detection (Implemented)
 
 **Dataset:** QCD quark/gluon jet events — 3-channel 125×125 images (Tracks, ECAL, HCAL).
 
@@ -35,6 +35,13 @@ Projects images onto a $k$-NN topological manifold and classifies them using mul
 ```bash
 python src/task2_gnn.py --epochs 10 --knn-k 8 --batch-size 64
 ```
+
+### 3. Graph Contrastive Learning (Task 3)
+Applies a SimCLR-inspired NT-Xent contrastive framework for unsupervised anomaly detection.
+```bash
+python src/task3_contrastive.py --pretrain-epochs 10 --finetune-epochs 10 --tau 0.5
+```
+> **PyTorch Geometric:** install `torch-scatter` and `torch-sparse` matching your CUDA version from https://data.pyg.org/whl/
 
 ---
 
@@ -98,13 +105,37 @@ Linear(128→64) → ELU → Dropout(0.3) → Linear(64→1)
 
 ---
 
-## Repository Structure
+### Specific Task 1 — Contrastive Anomaly Detection (GraphCLR)
+
+```bash
+python src/task3_contrastive.py
+```
+
+Learns jet representations **without labels** via contrastive learning (SimCLR-style), then evaluates both unsupervised anomaly detection and supervised linear-probe classification.
+
+**Framework:**
+
+**Phase A — Unsupervised Pretraining:**
+1. **Augmentations:** Each jet graph gets two stochastically augmented views (Node/Edge drop + Feature Noise).
+2. **Encoder:** Same GAT × 3 backbone as Task 2.
+3. **Projection head:** 2-layer MLP (`GNN_DIM → 128`), L2-normalised output.
+4. **NT-Xent loss** (τ = 0.5).
+
+**Phase B — Supervised Linear Probe:**
+5. Freeze encoder weights and train a single linear layer on top.
+
+**Outputs:** `outputs/task3_roc.png` (linear probe) + `outputs/task3_roc_anomaly.png` (unsupervised)
+
+---
+
+## Results
 
 | Task | Mode | Metric | Value |
 |------|------|--------|-------|
 | Task 1 — CAE | — | Val MSE | 0.00010 |
-| Task 2 — GAT | — | — | (Pending) |
-| Task 3 — GraphCLR | — | — | (Pending) |
+| Task 2 — GAT | Supervised | Test ROC-AUC | 0.7686 |
+| Task 3 — GraphCLR | Unsupervised anomaly | Test ROC-AUC | 0.5016 |
+| Task 3 — GraphCLR | Linear probe | Test ROC-AUC | 0.5015 |
 
 ---
 
@@ -115,10 +146,14 @@ genie_evaluation_mudit/
 ├── data/              # dataset files
 ├── outputs/           # generated plots
 │   ├── task1_reconstructions.png
-│   └── task1_loss_curve.png
+│   ├── task2_roc.png
+│   ├── task3_roc.png
+│   └── task3_roc_anomaly.png
 ├── src/
 │   ├── data_utils.py         # shared data loading & point cloud conversion
-│   └── task1_cae.py          # Common Task 1 — Convolutional Autoencoder
+│   ├── task1_cae.py          # Common Task 1 — Convolutional Autoencoder
+│   ├── task2_gnn.py          # Common Task 2 — GAT Classifier
+│   └── task3_contrastive.py  # Specific Task 1 — GraphCLR
 └── requirements.txt
 ```
 
