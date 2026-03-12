@@ -176,6 +176,26 @@ class GraphCLR(nn.Module):
         z = self.projector(self.encoder(x, ei, b))
         return F.normalize(z, dim=1)
 
+def plot_roc(y_true, y_score, out_dir, filename, title, label):
+    """Visualizes model discriminative capability."""
+    fpr, tpr, _ = roc_curve(y_true, y_score)
+    auc = roc_auc_score(y_true, y_score)
+    
+    plt.figure(figsize=(6, 5))
+    plt.plot(fpr, tpr, label=f"{label} (AUC = {auc:.4f})", color="#2563EB", lw=2)
+    plt.plot([0, 1], [0, 1], linestyle="--", color="gray")
+    plt.xlabel("False Positive Rate", fontsize=11)
+    plt.ylabel("True Positive Rate", fontsize=11)
+    plt.title(title, fontsize=12, fontweight="bold")
+    plt.legend(fontsize=10)
+    plt.grid(alpha=0.3)
+    
+    save_path = os.path.join(out_dir, filename)
+    plt.savefig(save_path, dpi=150, bbox_inches="tight")
+    plt.close()
+    logger.info("Saved ROC curve → %s", save_path)
+
+
 # ─────────────────────────────────────────────────────────────
 # Objective formulation & Execution
 # ─────────────────────────────────────────────────────────────
@@ -195,6 +215,8 @@ def main(args: argparse.Namespace) -> None:
 
     root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     data_dir = os.path.join(root_dir, "data")
+    out_dir  = os.path.join(root_dir, "outputs")
+    os.makedirs(out_dir, exist_ok=True)
     
     X, y = load_dataset(data_dir, max_events=args.max_events)
     idx = np.random.default_rng(args.seed).permutation(len(y))
@@ -242,6 +264,8 @@ def main(args: argparse.Namespace) -> None:
     centroid = tr_H.mean(axis=0)
     scores = np.linalg.norm(te_H - centroid, axis=1) # L2 Distance S(G)
     logger.info("Phase B | Unsupervised Anomaly AUC (Centroid Distance): %.4f", roc_auc_score(te_Y, scores))
+    plot_roc(te_Y, scores, out_dir, "task3_roc_anomaly.png", 
+             "Unsupervised Anomaly Detection ROC", "Centroid Distance")
 
     logger.info("Phase B | Instantiating Linear Probe Classifer...")
     probe = nn.Linear(128, 2).to(device)
@@ -256,6 +280,8 @@ def main(args: argparse.Namespace) -> None:
     probe.eval()
     with torch.no_grad(): te_prob = F.softmax(probe(torch.tensor(te_H).to(device)), dim=1)[:, 1].cpu().numpy()
     logger.info("Phase B | Supervised Linear Probe Benchmark AUC: %.4f", roc_auc_score(te_Y, te_prob))
+    plot_roc(te_Y, te_prob, out_dir, "task3_roc.png", 
+             "Linear Probe Classification ROC", "Probe Classifier")
 
 
 if __name__ == "__main__":

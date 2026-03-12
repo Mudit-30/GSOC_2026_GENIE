@@ -165,6 +165,26 @@ class JetGAT(nn.Module):
 # ─────────────────────────────────────────────────────────────
 # Evaluation Loop
 # ─────────────────────────────────────────────────────────────
+def plot_roc(y_true, y_prob, out_dir, filename="task2_roc.png"):
+    """Visualizes model discriminative capability."""
+    fpr, tpr, _ = roc_curve(y_true, y_prob)
+    auc = roc_auc_score(y_true, y_prob)
+    
+    plt.figure(figsize=(6, 5))
+    plt.plot(fpr, tpr, label=f"GAT Classifier (AUC = {auc:.4f})", color="#2563EB", lw=2)
+    plt.plot([0, 1], [0, 1], linestyle="--", color="gray")
+    plt.xlabel("False Positive Rate", fontsize=11)
+    plt.ylabel("True Positive Rate", fontsize=11)
+    plt.title("ROC Curve — Quark/Gluon Jet Classification", fontsize=12, fontweight="bold")
+    plt.legend(fontsize=10)
+    plt.grid(alpha=0.3)
+    
+    save_path = os.path.join(out_dir, filename)
+    plt.savefig(save_path, dpi=150, bbox_inches="tight")
+    plt.close()
+    logger.info("Saved ROC curve → %s", save_path)
+
+
 @torch.no_grad()
 def eval_epoch(model: nn.Module, loader: DataLoader, criterion: nn.Module, device: torch.device) -> Tuple[float, np.ndarray, np.ndarray]:
     model.eval()
@@ -189,6 +209,8 @@ def main(args: argparse.Namespace) -> None:
 
     root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     data_dir = os.path.join(root_dir, "data")
+    out_dir  = os.path.join(root_dir, "outputs")
+    os.makedirs(out_dir, exist_ok=True)
     
     X, y = load_dataset(data_dir, max_events=args.max_events)
     n_samples = len(y)
@@ -245,6 +267,8 @@ def main(args: argparse.Namespace) -> None:
     _, te_log, te_y = eval_epoch(model, loaders['test'], criterion, device)
     te_prob = 1/(1+np.exp(-te_log))
     logger.info("Final Generalization Test AUC: %.4f", roc_auc_score(te_y, te_prob))
+    
+    plot_roc(te_y, te_prob, out_dir)
 
 
 if __name__ == "__main__":

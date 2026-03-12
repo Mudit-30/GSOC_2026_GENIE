@@ -1,6 +1,6 @@
 data/
 outputs/*.pth
-outputs/*.png
+!outputs/*.png
 __pycache__/
 *.pyc
 .venv/
